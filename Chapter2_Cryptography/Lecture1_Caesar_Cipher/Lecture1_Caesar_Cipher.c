@@ -5,11 +5,8 @@
 
 const int key = 3;
 
-char input_string[MAX_STR];
-char encrypted_string[MAX_STR] = { 0, };
-char decrypted_string[MAX_STR] = { 0, };
 
-void encrypt()
+void encrypt(const char input_string[], char encrypted_string[])
 {
 	for (int i = 0; i < MAX_STR; ++i)
 	{
@@ -29,7 +26,7 @@ void encrypt()
 	}
 }
 
-void decrypt()
+void decrypt(const char encrypted_string[], char decrypted_string[])
 {
 	for (int i = 0; i < MAX_STR; ++i)
 	{
@@ -51,15 +48,19 @@ void decrypt()
 
 int main()
 {
+	char input_string[MAX_STR];
+	char encrypted_string[MAX_STR] = { 0, };
+	char decrypted_string[MAX_STR] = { 0, };
+
 	//scanf("%s", input_string);
 	scanf_s("%s", input_string, sizeof(input_string));
 	printf("Original = %s\n", input_string);
 
-	encrypt();
+	encrypt(input_string, encrypted_string);
 
 	printf("Encrypted = %s\n", encrypted_string);
 
-	decrypt();
+	decrypt(encrypted_string, decrypted_string);
 
 	printf("Decrypted = %s\n", decrypted_string);
 
