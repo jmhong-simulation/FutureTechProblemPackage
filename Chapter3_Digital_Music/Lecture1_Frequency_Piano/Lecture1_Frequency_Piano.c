@@ -3,7 +3,7 @@
 
 int main()
 {
-	Beep(262ul, 500ul);
+	Beep(262, 500);
 
 	Sleep(1000);
 }
