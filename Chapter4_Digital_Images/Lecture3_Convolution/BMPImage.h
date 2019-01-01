@@ -7,9 +7,9 @@
 
 typedef struct
 {
-    float red_;
-    float green_;
-    float blue_;
+    float red;
+    float green;
+    float blue;
 } RGB;
 
 struct BMPHeader
@@ -39,7 +39,7 @@ const bool writeBMP24(const char *filename, const int x_res, const int y_res, co
 	int bytesPerLine;
 	unsigned char *buffer;
 
-	FILE *file;
+	FILE *file = NULL;
 	struct BMPHeader header;
 
 	int width = x_res;
@@ -48,7 +48,8 @@ const bool writeBMP24(const char *filename, const int x_res, const int y_res, co
 	// The length of each line must be a multiple of 4 bytes
 	bytesPerLine = (3 * (width + 1) / 4) * 4;
 
-	strcpy(header.file_type_, "BM");
+	header.file_type_[0] = 'B';
+	header.file_type_[1] = 'M';
 
 	header.offBits_ = 54;
 	header.file_size_ = header.offBits_ + bytesPerLine * height;
@@ -65,8 +66,7 @@ const bool writeBMP24(const char *filename, const int x_res, const int y_res, co
 	header.num_color_palette_ = 0;
 	header.num_color_important_ = 0;
 
-	file = fopen(filename, "wb");
-	if (file == NULL) return(0);
+	if (fopen_s(&file, filename, "wb")) return(0);
 
 	fwrite(&header.file_type_, 2, 1, file);
 	fwrite(&header.file_size_, 4, 1, file);
@@ -96,9 +96,9 @@ const bool writeBMP24(const char *filename, const int x_res, const int y_res, co
 		for (j = 0; j < width; j++)
 		{
 			ipos = 3 * (width * i + j);
-			buffer[3 * j]	  = (unsigned char)rgb_array[(j + i * x_res)].blue_; // blue
-			buffer[3 * j + 1] = (unsigned char)rgb_array[(j + i * x_res)].green_; // green
-			buffer[3 * j + 2] = (unsigned char)rgb_array[(j + i * x_res)].red_;	// red
+			buffer[3 * j]	  = (unsigned char)(rgb_array[(j + i * x_res)].blue  * 255.0f);	 // 0~1 -> 0~255
+			buffer[3 * j + 1] = (unsigned char)(rgb_array[(j + i * x_res)].green * 255.0f); 
+			buffer[3 * j + 2] = (unsigned char)(rgb_array[(j + i * x_res)].red   * 255.0f);	
 		}
 
 		fwrite(buffer, bytesPerLine, 1, file);
@@ -110,7 +110,7 @@ const bool writeBMP24(const char *filename, const int x_res, const int y_res, co
 	return true;
 }
 
-const bool readBMP24(const char* imagepath, int* res_x_, int* res_y_, RGB** rgb_array)
+const bool readBMP24(const char* imagepath, int* x_res, int* y_res, RGB** rgb_array)
 {
     printf("Reading image %s\n", imagepath);
 
@@ -121,8 +121,8 @@ const bool readBMP24(const char* imagepath, int* res_x_, int* res_y_, RGB** rgb_
     unsigned int width, height;
 
     // Open the file
-    FILE * file = fopen(imagepath, "rb");
-    if (!file) { printf("%s could not be opened. Are you in the right directory ? Don't forget to read the FAQ !\n", imagepath); getchar(); return 0; }
+	FILE * file = NULL;
+    if (fopen_s(&file, imagepath, "rb")) { printf("%s could not be opened. Are you in the right directory ? Don't forget to read the FAQ !\n", imagepath); getchar(); return 0; }
 
     // Read the header, i.e. the 54 first bytes
 
@@ -151,10 +151,10 @@ const bool readBMP24(const char* imagepath, int* res_x_, int* res_y_, RGB** rgb_
     //	if (imageSize == 0)    imageSize = width*height*3; // 3 : one byte for each Red, Green and Blue component
     if (dataPos == 0)      dataPos = 54; // The BMP header is done that way
 
-    *res_x_ = width;
-    *res_y_ = height;
+    *x_res = width;
+    *y_res = height;
 
-    int scanline_byte = *res_x_ * 3;
+    int scanline_byte = *x_res * 3;
     int padding = 0;
 
     while ((scanline_byte + padding) % 4 != 0) padding++;
@@ -174,15 +174,15 @@ const bool readBMP24(const char* imagepath, int* res_x_, int* res_y_, RGB** rgb_
     long buf_pos = 0;
     long new_pos = 0;
 
-    for (int y = 0; y < height; y++)
-        for (int x = 0; x < 3 * width; x += 3)
+    for (unsigned y = 0; y < height; y++)
+        for (unsigned x = 0; x < 3 * width; x += 3)
         {
             new_pos = y*width + x / 3;
             buf_pos = y*psb + x;
 
-            (*rgb_array)[new_pos].red_ = (float)image_buf[buf_pos + 2];
-            (*rgb_array)[new_pos].green_ = (float)image_buf[buf_pos + 1];
-            (*rgb_array)[new_pos].blue_ = (float)image_buf[buf_pos + 0];
+            (*rgb_array)[new_pos].red	= image_buf[buf_pos + 2] / 255.0f;	// 0.0f <= color <= 1.0f
+            (*rgb_array)[new_pos].green = image_buf[buf_pos + 1] / 255.0f;
+            (*rgb_array)[new_pos].blue	= image_buf[buf_pos + 0] / 255.0f;
         }
 
     // Everything is in memory now, the file wan be closed
