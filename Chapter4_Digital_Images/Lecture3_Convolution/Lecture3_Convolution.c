@@ -4,7 +4,7 @@
 #include <assert.h>
 #include "BMPImage.h"
 
-RGB get_color(const RGB* rgb_array, const int width, const int height, int i, int j)
+RGB get_color(RGB* rgb_array, int width, int height, int i, int j)
 {
 	// repeated boundary
 	//if (i < 0) i += width;
@@ -64,7 +64,19 @@ void main()
 		{
 			RGB color_temp = { 0.0f, 0.0f, 0.0f };
 
-			
+			for (int sub_j = 0; sub_j < 3; sub_j++)
+				for (int sub_i = 0; sub_i < 3; sub_i++)
+				{
+					RGB color_sub = get_color(rgb_array, res_x, res_y, i + sub_i - 1, j + sub_j - 1);
+
+					color_sub.red *= conv_mat[sub_j][sub_i];
+					color_sub.green *= conv_mat[sub_j][sub_i];
+					color_sub.blue *= conv_mat[sub_j][sub_i];
+
+					color_temp.red += color_sub.red;
+					color_temp.green += color_sub.green;
+					color_temp.blue += color_sub.blue;
+				}
 				
 			clip(&color_temp, 0.0f, 1.0f);
 			rgb_temp[i + res_x * j] = color_temp;
